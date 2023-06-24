@@ -3,7 +3,7 @@
 #include "math.h"
 
 typedef uint64_t physical_address;
-
+//TODO change the checks on table size from offsetwidth to page size
 struct AddressInformation
 {
     physical_address address;
@@ -296,7 +296,6 @@ physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
 {
     word_t FrameToAllocate;
     uint64_t VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
-    //Todo handle case in which page isn't allocated yet
     physical_address physicalOffset;
     TreePath OffsetsTree;
     for (uint64_t currentDepth = TABLES_DEPTH; currentDepth > 0; currentDepth--)
@@ -306,11 +305,8 @@ physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
     if (addressToWriteTo.error == true)
         return 0;
     return translate_address(VirtualoffsetAddress,addressToWriteTo.address,addressToWriteTo.depth);
-    //Todo add check for fails or edge cases
 }
 int VMread (uint64_t virtualAddress, word_t *value) {
-    //TODO: handle eadge case of reading something that doesn't exist
-    // TODO: Implement the getAddress
     if (virtualAddress > VIRTUAL_MEMORY_SIZE)
         return 0;
     uint64_t _address = getAddress(virtualAddress);
