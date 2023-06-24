@@ -106,7 +106,7 @@ int getUnusedFrame()
 
 int getCyclicalDistance()
 {
-
+    //Todo implement CyclicalDistance
 }
 word_t HandlePageFault()
 {
