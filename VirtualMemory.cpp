@@ -7,7 +7,7 @@ typedef uint64_t physical_address;
 struct AddressInformation
 {
     physical_address address;
-    physical_address next_address;
+    bool error;
     uint64_t depth;
 };
 struct FarPage
@@ -239,7 +239,7 @@ uint64_t AllocateNewFrame(physical_address FrameLocation, uint64_t virtualAddres
     PMwrite(FrameLocation,unusedPage);
     return unusedPage;
 }
-AddressInformation search_for (TreePath offsets, uint64_t virtualAddress)
+AddressInformation search_for (TreePath offsets, uint64_t virtualAddress,bool ReadOperation = true)
 {
     word_t _word = 0;
     AddressInformation result = {0, 0};
@@ -251,7 +251,7 @@ AddressInformation search_for (TreePath offsets, uint64_t virtualAddress)
         if (_address >= RAM_SIZE)
         {
             result.address = _address;
-            result.next_address = -1;
+            result.error = true;
             return result;
         }
 
@@ -262,7 +262,15 @@ AddressInformation search_for (TreePath offsets, uint64_t virtualAddress)
         result.depth = i;
         if (!_word)
         {
-            result.address = AllocateNewFrame(_address,virtualAddress);
+            if(ReadOperation) {
+                _address = translate_address(offsets.paths[i], result
+                        .address, i);
+                result.error = true;
+                result.address = _address;
+                return result;
+            }
+            else
+                result.address = AllocateNewFrame(_address,virtualAddress);
 //            _address = translate_address (offsets.paths[i], result
 //                    .address, i);
 //            result.next_address = -1;
@@ -284,7 +292,7 @@ uint64_t writeNode (physical_address addr, uint64_t frame)
     return 1;
 }
 
-physical_address getAddress(uint64_t virtualAddress)
+physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
 {
     word_t FrameToAllocate;
     uint64_t VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
@@ -294,29 +302,22 @@ physical_address getAddress(uint64_t virtualAddress)
     for (uint64_t currentDepth = TABLES_DEPTH; currentDepth > 0; currentDepth--)
         OffsetsTree.paths[TABLES_DEPTH - currentDepth] = (virtualAddress >> (((currentDepth) * OFFSET_WIDTH))&
                                            (( 1LL<< OFFSET_WIDTH) - 1));
-    AddressInformation addressToWriteTo = search_for(OffsetsTree, virtualAddress);
+    AddressInformation addressToWriteTo = search_for(OffsetsTree, virtualAddress, ReadOperation);
+    if (addressToWriteTo.error == true)
+        return 0;
     return translate_address(VirtualoffsetAddress,addressToWriteTo.address,addressToWriteTo.depth);
     //Todo add check for fails or edge cases
 }
-int VMread (uint64_t virtualAddress, word_t *value)
-{
+int VMread (uint64_t virtualAddress, word_t *value) {
     //TODO: handle eadge case of reading something that doesn't exist
     // TODO: Implement the getAddress
-    AddressInformation _address = getAddress(virtualAddress);
-    uint64_t depth = (int) _address.depth;
-    physical_address translated_address = translate_address (
-            virtualAddress
-            & (PAGE_SIZE - 1), _address.address, depth);
-    if ((virtualAddress >= (VIRTUAL_MEMORY_SIZE << WORD_WIDTH)))
+    if (virtualAddress > VIRTUAL_MEMORY_SIZE)
         return 0;
-    bool translated_ended = translated_address >= RAM_SIZE;
-    bool virtual_ended = virtualAddress >= VIRTUAL_MEMORY_SIZE;
-    bool should_halt = virtual_ended || translated_ended;
-    if (should_halt)
-    {
+    uint64_t _address = getAddress(virtualAddress);
+    if (_address == 0) {
         return 0;
     }
-    PMread (translated_address, (word_t *) value);
+    PMread(_address, value);
     return 1;
 }
 
@@ -325,8 +326,8 @@ int VMread (uint64_t virtualAddress, word_t *value)
 int VMwrite(uint64_t virtualAddress, word_t value) {
     if (virtualAddress > VIRTUAL_MEMORY_SIZE)
         return 0;
-    physical_address addressToWriteTo = getAddress(virtualAddress);
-    if (addressToWriteTo == -1)
+    physical_address addressToWriteTo = getAddress(virtualAddress, false);
+    if (addressToWriteTo == 0)
         return 0;
     PMwrite(getAddress(virtualAddress),value);
     return 1;
