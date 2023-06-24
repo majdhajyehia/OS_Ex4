@@ -118,6 +118,7 @@ int writeNode (physical_address addr, uint64_t frame)
   return 1;
 }
 
+
 int VMread (uint64_t virtualAddress, word_t *value)
 {
   // TODO: Implement the getAddress
@@ -137,4 +138,23 @@ int VMread (uint64_t virtualAddress, word_t *value)
   }
   PMread (translated_address, (word_t *) value);
   return 1;
+}
+int getEmptyPage()
+{
+    //Todo implement DFS check for empty page
+}
+int HandlePageFault()
+{
+    //Todo implement function to choose how to handle runing out of pages
+}
+
+
+
+int VMwrite(uint64_t virtualAddress, word_t value) {
+    int offsetAddress = virtualAddress & (OFFSET_WIDTH-1);
+    int CurrentDepth = 0;
+    word_t* NextAddress;
+    PMread(translate_address(0,0,0),NextAddress);
+    if (NextAddress)
+    return 0;
 }
