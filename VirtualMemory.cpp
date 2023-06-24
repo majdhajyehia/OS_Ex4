@@ -73,7 +73,55 @@ TreePath get_path (uint64_t virtualAddress)
             virtualAddress & ((1LL << GET_INITIAL_PAGE_SIZE ()) - 1);
     return tree_path;
 }
+//recursive helper function for the DFS search for unused frames
+int maxUsedFrameInDFS(int CurrentDepth, word_t lastAllocatedFrame)
+{
+    if (CurrentDepth == TABLES_DEPTH)
+        return 0;
+    int maxUsedFrame = 0;
+    int currentMaxFrame = 0;
+    word_t currentWord = 0;
+    int temp;
+    for (int i; i<OFFSET_WIDTH;i++)
+        PMread(translate_address (i,lastAllocatedFrame,i),&currentWord);
+    if (!currentWord) {
+    } else
+    if (currentMaxFrame<currentWord)
+        currentMaxFrame = currentWord;
+    temp = maxUsedFrameInDFS(CurrentDepth + 1, currentWord);
+    if (currentMaxFrame<temp)
+        currentMaxFrame = temp;
+    maxUsedFrame = currentMaxFrame;
+    return maxUsedFrame;
+}
+//DFS function to find unused frame if exists
+//return -1 if all are taken
+int getUnusedFrame()
+{
+    int nextUnusedFrame = maxUsedFrameInDFS(0,0) + 1;
+    if (nextUnusedFrame == NUM_FRAMES)
+        return -1;
+    return nextUnusedFrame;
+}
 
+int getCyclicalDistance()
+{
+
+}
+word_t HandlePageFault()
+{
+    //Todo implement function to choose how to handle runing out of pages
+}
+word_t AllocateNewPage(physical_address PageLocation)
+{
+    word_t unusedPage = getUnusedFrame();
+    if (unusedPage == -1)
+        //Todo implement handlePagefault
+        unusedPage = HandlePageFault();
+    //Todo clean unused page
+    PMwrite(PageLocation,unusedPage);
+    return unusedPage;
+}
 AddressInformation search_for (TreePath offsets)
 {
     word_t _word = 0;
@@ -97,12 +145,13 @@ AddressInformation search_for (TreePath offsets)
         result.depth = i;
         if (!_word)
         {
-            //TODO add alocate new page here
-            _address = translate_address (offsets.paths[i], result
-                    .address, i);
-            result.next_address = -1;
-            result.address = _address;
-            return result;
+            //TODO add pageFault in AllocateNew Page
+            result.address = AllocateNewPage(_address);
+//            _address = translate_address (offsets.paths[i], result
+//                    .address, i);
+//            result.next_address = -1;
+//            result.address = _address;
+//            return result;
         }
         else
         {
@@ -140,49 +189,6 @@ int VMread (uint64_t virtualAddress, word_t *value)
     }
     PMread (translated_address, (word_t *) value);
     return 1;
-}
-//recursive helper function for the DFS search for unused frames
-int maxUsedFrameInDFS(int CurrentDepth, word_t lastAllocatedFrame)
-{
-    if (CurrentDepth == TABLES_DEPTH)
-        return 0;
-    int maxUsedFrame = 0;
-    int currentMaxFrame = 0;
-    word_t currentWord = 0;
-    int temp;
-    for (int i; i<OFFSET_WIDTH;i++)
-        PMread(translate_address (i,lastAllocatedFrame,i),&currentWord);
-    if (!currentWord) {
-    } else
-    if (currentMaxFrame<currentWord)
-        currentMaxFrame = currentWord;
-    temp = maxUsedFrameInDFS(CurrentDepth + 1, currentWord);
-    if (currentMaxFrame<temp)
-        currentMaxFrame = temp;
-    maxUsedFrame = currentMaxFrame;
-    return maxUsedFrame;
-}
-//DFS function to find unused frame if exists
-//return -1 if all are taken
-int getUnusedFrame()
-{
-    int nextUnusedFrame = maxUsedFrameInDFS(0,0) + 1;
-    if (nextUnusedFrame == NUM_FRAMES)
-        return -1;
-    return nextUnusedFrame;
-}
-
-int getCyclicalDistance()
-{
-
-}
-int HandlePageFault()
-{
-    //Todo implement function to choose how to handle runing out of pages
-}
-AllocateNewPage()
-{
-
 }
 physical_address getPageAddress(uint_fast64_t virtualAddress)
 {
