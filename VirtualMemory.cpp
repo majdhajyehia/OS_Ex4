@@ -154,8 +154,10 @@ physical_address getPageAddress(uint_fast64_t virtualAddress)
     bool EmptyNextAddress = false;
     physical_address physicalOffset;
     TreePath OffsetsTree;
-    for (int currentDepth = TABLES_DEPTH; currentDepth > 0; currentDepth--)
-        OffsetsTree.paths[currentDepth - 1] = virtualAddress & (((currentDepth - 1) * OFFSET_WIDTH) << OFFSET_WIDTH);
+    for (int currentDepth = TABLES_DEPTH - 1; currentDepth >= 0; currentDepth--)
+        OffsetsTree.paths[currentDepth] = (virtualAddress >> (((currentDepth) * OFFSET_WIDTH))&
+                                                                        (( 1LL<< OFFSET_WIDTH) - 1));
+
     //Todo add handling int search_for for the case of non existing page
     AddressInformation addressToWriteTo = search_for(OffsetsTree);
     return addressToWriteTo.address;
