@@ -190,7 +190,7 @@ int VMread (uint64_t virtualAddress, word_t *value)
     PMread (translated_address, (word_t *) value);
     return 1;
 }
-physical_address getPageAddress(uint_fast64_t virtualAddress)
+physical_address getAddress(uint_fast64_t virtualAddress)
 {
     word_t FrameToAllocate;
     int VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
@@ -200,13 +200,7 @@ physical_address getPageAddress(uint_fast64_t virtualAddress)
     for (int currentDepth = TABLES_DEPTH - 1; currentDepth >= 0; currentDepth--)
         OffsetsTree.paths[currentDepth] = (virtualAddress >> (((currentDepth) * OFFSET_WIDTH))&
                                            (( 1LL<< OFFSET_WIDTH) - 1));
-
-    //Todo add handling int search_for for the case of non existing page
-    //Todo clean frame before allocating it to a new location
     AddressInformation addressToWriteTo = search_for(OffsetsTree);
-    while (addressToWriteTo.next_address == -1)
-        //Todo: allocate empty frame and search again
-        addressToWriteTo = search_for(OffsetsTree);
     return translate_address(VirtualoffsetAddress,addressToWriteTo.address,addressToWriteTo.depth);
 }
 
