@@ -147,6 +147,19 @@ int HandlePageFault()
 {
     //Todo implement function to choose how to handle runing out of pages
 }
+physical_address getPageAddress(uint_fast64_t virtualAddress)
+{
+    int VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
+    //Todo handle case in which page isn't allocated yet
+    bool EmptyNextAddress = false;
+    physical_address physicalOffset;
+    TreePath OffsetsTree;
+    for (int currentDepth = TABLES_DEPTH; currentDepth > 0; currentDepth--)
+        OffsetsTree.paths[currentDepth - 1] = virtualAddress & (((currentDepth - 1) * OFFSET_WIDTH) << OFFSET_WIDTH);
+    //Todo add handling int search_for for the case of non existing page
+    AddressInformation addressToWriteTo = search_for(OffsetsTree);
+    return addressToWriteTo.address;
+}
 
 
 
@@ -156,5 +169,6 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
     word_t* NextAddress;
     PMread(translate_address(0,0,0),NextAddress);
     if (NextAddress)
+        //Todo finish the function
     return 0;
 }
