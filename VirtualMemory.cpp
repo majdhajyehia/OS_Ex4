@@ -1,5 +1,6 @@
 #include "VirtualMemory.h"
 #include "PhysicalMemory.h"
+#include "math.h"
 
 typedef uint64_t physical_address;
 
@@ -121,6 +122,7 @@ int writeNode (physical_address addr, uint64_t frame)
 
 int VMread (uint64_t virtualAddress, word_t *value)
 {
+    //TODO: handle eadge case of reading something that doesn't exist
   // TODO: Implement the getAddress
   AddressInformation _address = getAddress (virtualAddress);
   int depth = (int) _address.depth;
@@ -139,9 +141,25 @@ int VMread (uint64_t virtualAddress, word_t *value)
   PMread (translated_address, (word_t *) value);
   return 1;
 }
-int getEmptyPage()
+//DFS function to find unused frame if exists
+//return -1 if all are taken
+int getUnusedFrame()
 {
     //Todo implement DFS check for empty page
+    int maxUsedFrame = 0;
+
+}
+
+//recursive helper function for the DFS search for unused frames
+int maxUsedFrameInDFS(int CurrentDepth, uint64_t virtualAddress)
+{
+    if (CurrentDepth == TABLES_DEPTH-1)
+        max();
+    return 0;
+}
+int getCyclicalDistance()
+{
+
 }
 int HandlePageFault()
 {
@@ -159,8 +177,12 @@ physical_address getPageAddress(uint_fast64_t virtualAddress)
                                                                         (( 1LL<< OFFSET_WIDTH) - 1));
 
     //Todo add handling int search_for for the case of non existing page
+    //Todo clean frame before allocating it to a new location
     AddressInformation addressToWriteTo = search_for(OffsetsTree);
-    return addressToWriteTo.address;
+    while (addressToWriteTo.next_address == -1)
+        //Todo: allocate empty frame and search again
+        addressToWriteTo = search_for(OffsetsTree);
+    return translate_address(VirtualoffsetAddress,addressToWriteTo.address,addressToWriteTo.depth);
 }
 
 
