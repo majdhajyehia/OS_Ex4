@@ -147,14 +147,25 @@ int getUnusedFrame()
 {
     //Todo implement DFS check for empty page
     int maxUsedFrame = 0;
+    word_t lastAllocatedFrame = 0;
+    word_t currentWord;
+    for (int i; i<OFFSET_WIDTH;i++)
+        PMread(translate_address (i,lastAllocatedFrame,i),&currentWord);
+        if (!currentWord)
+            continue;
+        else
+
+            maxUsedFrame =
+
 
 }
 
 //recursive helper function for the DFS search for unused frames
-int maxUsedFrameInDFS(int CurrentDepth, uint64_t virtualAddress)
+int maxUsedFrameInDFS(int CurrentDepth, word_t lastAllocatedFrame)
 {
     if (CurrentDepth == TABLES_DEPTH-1)
-        max();
+
+        fmax()
     return 0;
 }
 int getCyclicalDistance()
@@ -169,7 +180,6 @@ physical_address getPageAddress(uint_fast64_t virtualAddress)
 {
     int VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
     //Todo handle case in which page isn't allocated yet
-    bool EmptyNextAddress = false;
     physical_address physicalOffset;
     TreePath OffsetsTree;
     for (int currentDepth = TABLES_DEPTH - 1; currentDepth >= 0; currentDepth--)
