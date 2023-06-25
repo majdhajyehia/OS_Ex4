@@ -310,11 +310,14 @@ physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
     return translate_address(VirtualoffsetAddress,addressToWriteTo.address,addressToWriteTo.depth);
 }
 int VMread (uint64_t virtualAddress, word_t *value) {
-    if (virtualAddress > VIRTUAL_MEMORY_SIZE)
-        return 0;
+    if ( (virtualAddress >= ( VIRTUAL_MEMORY_SIZE << WORD_WIDTH)) )
+      return 0;
     uint64_t _address = getAddress(virtualAddress);
     if (_address == 0) {
         return 0;
+    }
+    if(_address >= RAM_SIZE || virtualAddress >= VIRTUAL_MEMORY_SIZE){
+      return 0;
     }
     PMread(_address, value);
     return 1;
