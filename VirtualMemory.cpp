@@ -81,7 +81,7 @@ uint64_t maxUsedFrameInDFS(uint64_t CurrentDepth, word_t lastAllocatedFrame)
     uint64_t currentMaxFrame = 0;
     word_t currentWord = 0;
     uint64_t temp;
-    for (uint64_t i; i<PAGE_SIZE;i++)
+    for (uint64_t i = 0; i<PAGE_SIZE;i++)
     {
         PMread(translate_address (i,lastAllocatedFrame,i),&currentWord);
         if (!currentWord)
@@ -238,7 +238,7 @@ uint64_t AllocateNewFrame(physical_address FrameLocation, uint64_t virtualAddres
 AddressInformation search_for (TreePath offsets, uint64_t virtualAddress,bool ReadOperation = true)
 {
     word_t _word = 0;
-    AddressInformation result = {0, 0};
+    AddressInformation result = {0, false,0};
     for (uint64_t i = 0; i < TABLES_DEPTH; i++)
     {
         result.depth = i;
@@ -323,15 +323,15 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
     physical_address addressToWriteTo = getAddress(virtualAddress, false);
     if (addressToWriteTo == RAM_SIZE+1)
         return 0;
-    PMwrite(getAddress(virtualAddress),value);
+    PMwrite(addressToWriteTo,value);
     return 1;
 }
 void VMinitialize ()
 {
-//    cleanFrame(0);
-    flushTable (0, 0);
-    for (uint64_t i = 1; i < RAM_SIZE; i++)
-    {
-        flushTable (i, 1);
-    }
+    cleanFrame(0);
+//    flushTable (0, 0);
+//    for (uint64_t i = 1; i < RAM_SIZE; i++)
+//    {
+//        flushTable (i, 1);
+//    }
 }
