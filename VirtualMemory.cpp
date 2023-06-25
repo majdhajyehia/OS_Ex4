@@ -182,11 +182,11 @@ void ClearFatherFrame(uint64_t ChildFrame, uint64_t CheckingFrame, uint64_t Dept
     uint64_t currentMaxFrame = 0;
     word_t currentWord = 0;
     uint64_t temp;
-    for (uint64_t i; i<PAGE_SIZE; i++) {
+    for (uint64_t i = 0; i<PAGE_SIZE; i++) {
         PMread(translate_address(i, CheckingFrame, Depth), &currentWord);
         if (!currentWord) {
         } else {
-            if (currentWord == ChildFrame) {
+            if ((uint64_t)currentWord == (uint64_t)ChildFrame) {
                 PMwrite(translate_address(i, CheckingFrame, Depth), 0);
                 return;
             }
