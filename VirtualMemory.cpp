@@ -159,12 +159,13 @@ FarPage getFarthestUsedPageHelper(uint64_t currentPage, uint64_t Depth,FarPage l
         }
         else {
             tempFarPage.address = currentWord;
-            tempFarPage.virtualAddress = lastFarPage.virtualAddress << OFFSET_WIDTH + i;
+            tempFarPage.virtualAddress = (lastFarPage.virtualAddress << OFFSET_WIDTH) + i;
             tempFarPage = getFarthestUsedPageHelper(currentPage,Depth+1,tempFarPage);
-            if (tempFarPage.distance > MaxFarPage.distance)
+            if (tempFarPage.distance > MaxFarPage.distance) {
                 MaxFarPage.address = tempFarPage.address;
                 MaxFarPage.distance = tempFarPage.distance;
                 MaxFarPage.virtualAddress = tempFarPage.virtualAddress;
+            }
         }
     }
     return MaxFarPage;
@@ -195,8 +196,12 @@ void ClearFatherFrame(uint64_t ChildFrame, uint64_t CheckingFrame, uint64_t Dept
         }
     }
 }
-uint64_t DeallocateFrame(uint64_t frame)
+uint64_t DeallocateFrame(uint64_t frame, uint64_t frameIndex = 0, bool is_leaf = false)
 {
+    if (is_leaf)
+    {
+        PMevict(frame,frameIndex);
+    }
     cleanFrame(frame);
     ClearFatherFrame(frame,0,0);
     return frame;
@@ -226,16 +231,20 @@ uint64_t HandlePageFault(uint64_t currentFrame, uint64_t currentPage)
         }
     }
     FarPage page = getfarthestUsedFrame(currentPage);
-    DeallocateFrame(page.address);
+    DeallocateFrame(page.address,page.virtualAddress,true);
     return page.address;
 }
 
-uint64_t AllocateNewFrame(physical_address FrameLocation, uint64_t virtualAddress)
+uint64_t AllocateNewFrame(physical_address FrameLocation, uint64_t virtualAddress,uint64_t Depth=0)
 {
     word_t unusedPage = getUnusedFrame();
     uint64_t currentFrame = FrameLocation >> OFFSET_WIDTH;//?
     if (unusedPage == -1)
         unusedPage = HandlePageFault(currentFrame,virtualAddress >> OFFSET_WIDTH);
+    if(Depth == TABLES_DEPTH)
+    {
+        PMrestore(unusedPage,virtualAddress>>OFFSET_WIDTH);
+    }
     PMwrite(FrameLocation,unusedPage);
     return unusedPage;
 }
@@ -269,7 +278,7 @@ AddressInformation search_for (TreePath offsets, uint64_t virtualAddress,bool Re
                 return result;
             }
             else
-                result.address = AllocateNewFrame(_address,virtualAddress);
+                result.address = AllocateNewFrame(_address,virtualAddress,i+1);
 //                _address = translate_address (offsets.paths[i], result
 //                        .address, i);
 //            result.next_address = -1;
@@ -291,7 +300,7 @@ uint64_t writeNode (physical_address addr, uint64_t frame)
     return 1;
 }
 
-physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
+physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = false)
 {
     word_t FrameToAllocate;
     uint64_t VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
