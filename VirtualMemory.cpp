@@ -51,14 +51,7 @@ void flushTable (uint64_t frameIndex, uint64_t depth)
     }
 }
 
-void VMinitialize ()
-{
-    flushTable (0, 0);
-    for (uint64_t i = 1; i < RAM_SIZE; i++)
-    {
-        flushTable (i, 1);
-    }
-}
+
 
 struct TreePath
 {
@@ -119,8 +112,11 @@ uint64_t getCyclicalDistance(uint64_t num1, uint64_t num2)
 }
 uint64_t cleanFrame(uint64_t frame)
 {
+    int Depth = 0;
+    if (frame!=0)
+        Depth = TABLES_DEPTH -1;
     for (uint64_t i = 0; i < PAGE_SIZE; i++)
-        PMwrite(translate_address(i,frame,TABLES_DEPTH - 1),0);
+        PMwrite(translate_address(i,frame,Depth),0);
     return frame;
 }
 bool IsClearFrame(uint64_t frame)
@@ -298,7 +294,7 @@ physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
     uint64_t VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
     physical_address physicalOffset;
     TreePath OffsetsTree;
-    for (uint64_t currentDepth = TABLES_DEPTH; currentDepth > 0; currentDepth--)
+    for (uint64_t currentDepth = TABLES_DEPTH; currentDepth > 1; currentDepth--)
         OffsetsTree.paths[TABLES_DEPTH - currentDepth] = (virtualAddress >> (((currentDepth) * OFFSET_WIDTH))&
                                            (( 1LL<< OFFSET_WIDTH) - 1));
     AddressInformation addressToWriteTo = search_for(OffsetsTree, virtualAddress, ReadOperation);
@@ -330,4 +326,13 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
         return 0;
     PMwrite(getAddress(virtualAddress),value);
     return 1;
+}
+void VMinitialize ()
+{
+//    cleanFrame(0);
+    flushTable (0, 0);
+    for (uint64_t i = 1; i < RAM_SIZE; i++)
+    {
+        flushTable (i, 1);
+    }
 }
