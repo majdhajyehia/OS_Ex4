@@ -55,7 +55,7 @@ void flushTable (uint64_t frameIndex, uint64_t depth)
 
 struct TreePath
 {
-    physical_address paths[TABLES_DEPTH + 1];
+    physical_address paths[TABLES_DEPTH];
 };
 
 TreePath get_path (uint64_t virtualAddress)
@@ -229,9 +229,9 @@ uint64_t HandlePageFault(uint64_t currentFrame, uint64_t currentPage)
 uint64_t AllocateNewFrame(physical_address FrameLocation, uint64_t virtualAddress)
 {
     word_t unusedPage = getUnusedFrame();
-    uint64_t currentFrame = OFFSET_WIDTH << FrameLocation ;//?
+    uint64_t currentFrame = FrameLocation >> OFFSET_WIDTH;//?
     if (unusedPage == -1)
-        unusedPage = HandlePageFault(currentFrame,OFFSET_WIDTH << virtualAddress);
+        unusedPage = HandlePageFault(currentFrame,virtualAddress >> OFFSET_WIDTH);
     PMwrite(FrameLocation,unusedPage);
     return unusedPage;
 }
@@ -252,15 +252,14 @@ AddressInformation search_for (TreePath offsets, uint64_t virtualAddress,bool Re
         }
 
         // Read the address again
-        _address = translate_address (offsets.paths[i], result
-                .address, i);
+//        _address = translate_address (offsets.paths[i], result.address, i);
         PMread (_address, &_word);
         result.depth = i;
         if (!_word)
         {
             if(ReadOperation) {
-                _address = translate_address(offsets.paths[i], result
-                        .address, i);
+//                _address = translate_address(offsets.paths[i], result
+//                        .address, i);
                 result.error = true;
                 result.address = _address;
                 return result;
@@ -294,7 +293,7 @@ physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
     uint64_t VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
     physical_address physicalOffset;
     TreePath OffsetsTree;
-    for (uint64_t currentDepth = TABLES_DEPTH; currentDepth > 1; currentDepth--)
+    for (uint64_t currentDepth = TABLES_DEPTH; currentDepth > 0; currentDepth--)
         OffsetsTree.paths[TABLES_DEPTH - currentDepth] = (virtualAddress >> (((currentDepth) * OFFSET_WIDTH))&
                                            (( 1LL<< OFFSET_WIDTH) - 1));
     AddressInformation addressToWriteTo = search_for(OffsetsTree, virtualAddress, ReadOperation);
