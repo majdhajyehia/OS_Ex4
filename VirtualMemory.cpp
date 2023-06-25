@@ -1,6 +1,5 @@
 #include "VirtualMemory.h"
 #include "PhysicalMemory.h"
-#include "math.h"
 
 typedef uint64_t physical_address;
 //TODO change the checks on table size from offsetwidth to page size
@@ -24,8 +23,10 @@ inline physical_address GET_INITIAL_PAGE_SIZE ()
 }
 
 physical_address translate_address (physical_address offset,
-                                    physical_address addr, uint64_t depth)
+                                    physical_address addr, uint64_t
+                                    depth)
 {
+    (void) depth;
     return addr * PAGE_SIZE + offset;
 //    if (depth)
 //        return addr * PAGE_SIZE + offset;
@@ -59,26 +60,26 @@ struct TreePath
     physical_address paths[TABLES_DEPTH];
 };
 
-TreePath get_path (uint64_t virtualAddress)
-{
-    TreePath tree_path = {};
-    virtualAddress >>= OFFSET_WIDTH;
-    for (uint64_t i = 0; i < TABLES_DEPTH - 1; virtualAddress >>= OFFSET_WIDTH, i++)
-    {
-        uint64_t _index = TABLES_DEPTH - i - 1;
-        physical_address val = virtualAddress & (PAGE_SIZE - 1);
-        tree_path.paths[_index] = val;
-    }
-    tree_path.paths[0] =
-            virtualAddress & ((1LL << GET_INITIAL_PAGE_SIZE ()) - 1);
-    return tree_path;
-}
+//TreePath get_path (uint64_t virtualAddress)
+//{
+//    TreePath tree_path = {};
+//    virtualAddress >>= OFFSET_WIDTH;
+//    for (uint64_t i = 0; i < TABLES_DEPTH - 1; virtualAddress >>= OFFSET_WIDTH, i++)
+//    {
+//        uint64_t _index = TABLES_DEPTH - i - 1;
+//        physical_address val = virtualAddress & (PAGE_SIZE - 1);
+//        tree_path.paths[_index] = val;
+//    }
+//    tree_path.paths[0] =
+//            virtualAddress & ((1LL << GET_INITIAL_PAGE_SIZE ()) - 1);
+//    return tree_path;
+//}
 //recursive helper function for the DFS search for unused frames
 uint64_t maxUsedFrameInDFS(uint64_t CurrentDepth, word_t lastAllocatedFrame)
 {
     if (CurrentDepth == TABLES_DEPTH)
         return 0;
-    uint64_t maxUsedFrame = 0;
+    uint64_t maxUsedFrame;
     uint64_t currentMaxFrame = 0;
     word_t currentWord = 0;
     uint64_t temp;
@@ -124,7 +125,7 @@ bool IsClearFrame(uint64_t frame)
 {
     bool IsFrameClear = true;
     word_t TempWord;
-    uint64_t physicalAddress=0;
+    uint64_t physicalAddress;
     for (uint64_t i = 0; i < PAGE_SIZE; i++) {
         physicalAddress = translate_address(i, frame, TABLES_DEPTH - 1);
         PMread(physicalAddress, &TempWord);
@@ -147,11 +148,11 @@ FarPage getFarthestUsedPageHelper(uint64_t currentPage, uint64_t Depth,FarPage l
         tempFarPage.address = lastFarPage.address;
         return tempFarPage;
     }
-    uint64_t maxUsedFrame = 0;
-    uint64_t currentMaxFrame = 0;
+//    uint64_t maxUsedFrame = 0;
+//    uint64_t currentMaxFrame = 0;
     word_t currentWord = 0;
-    uint64_t temp;
-    for (uint64_t i; i<PAGE_SIZE;i++)
+//    uint64_t temp;
+    for (uint64_t i=0; i<PAGE_SIZE;i++)
     {
         PMread(translate_address (i,lastFarPage.address,i),&currentWord);
         if (!currentWord)
@@ -179,10 +180,10 @@ void ClearFatherFrame(uint64_t ChildFrame, uint64_t CheckingFrame, uint64_t Dept
 {
     if (Depth == TABLES_DEPTH)
         return;
-    uint64_t maxUsedFrame = 0;
-    uint64_t currentMaxFrame = 0;
+//    uint64_t maxUsedFrame = 0;
+//    uint64_t currentMaxFrame = 0;
     word_t currentWord = 0;
-    uint64_t temp;
+//    uint64_t temp;
     for (uint64_t i = 0; i<PAGE_SIZE; i++) {
         PMread(translate_address(i, CheckingFrame, Depth), &currentWord);
         if (!currentWord) {
@@ -220,7 +221,7 @@ uint64_t HandlePageFault(uint64_t currentFrame, uint64_t currentPage)
 {
     //Todo implement function to choose how to handle runing out of pages
     //Todo go over all frames with get clear Frame
-    uint64_t frame;
+//    uint64_t frame;
     for (uint64_t i = 1; i < NUM_FRAMES; i++) {
         if (i == currentFrame) {}
         else {
@@ -237,10 +238,11 @@ uint64_t HandlePageFault(uint64_t currentFrame, uint64_t currentPage)
 
 uint64_t AllocateNewFrame(physical_address FrameLocation, uint64_t virtualAddress,uint64_t Depth=0)
 {
-    word_t unusedPage = getUnusedFrame();
+    auto unusedPage = (word_t)getUnusedFrame();
     uint64_t currentFrame = FrameLocation >> OFFSET_WIDTH;//?
     if (unusedPage == -1)
-        unusedPage = HandlePageFault(currentFrame,virtualAddress >> OFFSET_WIDTH);
+        unusedPage = (word_t)HandlePageFault(currentFrame,virtualAddress >>
+        OFFSET_WIDTH);
     if(Depth == TABLES_DEPTH)
     {
         PMrestore(unusedPage,virtualAddress>>OFFSET_WIDTH);
@@ -294,23 +296,23 @@ AddressInformation search_for (TreePath offsets, uint64_t virtualAddress,bool Re
     return result;
 }
 
-uint64_t writeNode (physical_address addr, uint64_t frame)
-{
-    PMwrite (addr, (word_t) frame);
-    return 1;
-}
+//uint64_t writeNode (physical_address addr, uint64_t frame)
+//{
+//    PMwrite (addr, (word_t) frame);
+//    return 1;
+//}
 
 physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = false)
 {
-    word_t FrameToAllocate;
+//    word_t FrameToAllocate;
     uint64_t VirtualoffsetAddress = virtualAddress & (PAGE_SIZE-1);
-    physical_address physicalOffset;
-    TreePath OffsetsTree;
+//    physical_address physicalOffset;
+    TreePath OffsetsTree = {};
     for (uint64_t currentDepth = TABLES_DEPTH; currentDepth > 0; currentDepth--)
         OffsetsTree.paths[TABLES_DEPTH - currentDepth] = (virtualAddress >> (((currentDepth) * OFFSET_WIDTH))&
                                            (( 1LL<< OFFSET_WIDTH) - 1));
     AddressInformation addressToWriteTo = search_for(OffsetsTree, virtualAddress, ReadOperation);
-    if (addressToWriteTo.error == true)
+    if (addressToWriteTo.error)
         return RAM_SIZE+1;
     return translate_address(VirtualoffsetAddress,addressToWriteTo.address,addressToWriteTo.depth);
 }
