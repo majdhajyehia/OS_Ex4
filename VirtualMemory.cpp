@@ -299,14 +299,14 @@ physical_address getAddress(uint64_t virtualAddress, bool ReadOperation = true)
                                            (( 1LL<< OFFSET_WIDTH) - 1));
     AddressInformation addressToWriteTo = search_for(OffsetsTree, virtualAddress, ReadOperation);
     if (addressToWriteTo.error == true)
-        return 0;
+        return RAM_SIZE+1;
     return translate_address(VirtualoffsetAddress,addressToWriteTo.address,addressToWriteTo.depth);
 }
 int VMread (uint64_t virtualAddress, word_t *value) {
     if ( (virtualAddress >= ( VIRTUAL_MEMORY_SIZE << WORD_WIDTH)) )
       return 0;
     uint64_t _address = getAddress(virtualAddress);
-    if (_address == 0) {
+    if (_address == RAM_SIZE+1) {
         return 0;
     }
     if(_address >= RAM_SIZE || virtualAddress >= VIRTUAL_MEMORY_SIZE){
@@ -322,7 +322,7 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
     if (virtualAddress > VIRTUAL_MEMORY_SIZE)
         return 0;
     physical_address addressToWriteTo = getAddress(virtualAddress, false);
-    if (addressToWriteTo == 0)
+    if (addressToWriteTo == RAM_SIZE+1)
         return 0;
     PMwrite(getAddress(virtualAddress),value);
     return 1;
