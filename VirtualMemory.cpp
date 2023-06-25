@@ -26,9 +26,10 @@ inline physical_address GET_INITIAL_PAGE_SIZE ()
 physical_address translate_address (physical_address offset,
                                     physical_address addr, uint64_t depth)
 {
-    if (depth)
-        return addr * PAGE_SIZE + offset;
-    return addr * (1LL << GET_INITIAL_PAGE_SIZE ()) + offset;
+    return addr * PAGE_SIZE + offset;
+//    if (depth)
+//        return addr * PAGE_SIZE + offset;
+//    return addr * (1LL << GET_INITIAL_PAGE_SIZE ()) + offset;
 }
 
 void flushTable (uint64_t frameIndex, uint64_t depth)
@@ -123,12 +124,15 @@ bool IsClearFrame(uint64_t frame)
 {
     bool IsFrameClear = true;
     word_t TempWord;
-    for (uint64_t i = 0; i < PAGE_SIZE; i++)
-        PMread(translate_address(i,frame,TABLES_DEPTH - 1),&TempWord);
-        if(TempWord == word_t(0))
-        {}
-        else
+    uint64_t physicalAddress=0;
+    for (uint64_t i = 0; i < PAGE_SIZE; i++) {
+        physicalAddress = translate_address(i, frame, TABLES_DEPTH - 1);
+        PMread(physicalAddress, &TempWord);
+        if (TempWord == 0) {}
+        else {
             IsFrameClear = false;
+        }
+    }
     return IsFrameClear;
 }
 struct
@@ -266,8 +270,8 @@ AddressInformation search_for (TreePath offsets, uint64_t virtualAddress,bool Re
             }
             else
                 result.address = AllocateNewFrame(_address,virtualAddress);
-//            _address = translate_address (offsets.paths[i], result
-//                    .address, i);
+//                _address = translate_address (offsets.paths[i], result
+//                        .address, i);
 //            result.next_address = -1;
 //            result.address = _address;
 //            return result;
@@ -277,7 +281,7 @@ AddressInformation search_for (TreePath offsets, uint64_t virtualAddress,bool Re
             result.address = _word;
         }
     }
-    result.address = _word;
+//    result.address = _word;
     return result;
 }
 
